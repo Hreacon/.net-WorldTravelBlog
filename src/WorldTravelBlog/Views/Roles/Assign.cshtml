@@ -13,7 +13,7 @@
     <div class="message-success">@ViewBag.ResultMessage</div>
 
     <p>
-        Username : @Html.DropDownList("User", ViewBag.Users as SelectList, new { onchange="this.form.submit()" })
+        Username : @Html.DropDownList("Username", ViewBag.Users as SelectList, new { onchange="this.form.submit()" })
     </p>
 
     <input type="submit" value="Choose" />

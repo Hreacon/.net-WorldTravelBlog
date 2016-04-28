@@ -43,25 +43,6 @@ namespace WorldTravelBlog.Controllers
             return RedirectToAction("Index");
         }
 
-        [Authorize(Roles = "Admin")]
-        public IActionResult Delete(string roleName)
-        {
-            var role = _context.Roles.FirstOrDefault(m => m.Name == roleName);
-            if (role != null)
-            {
-                try
-                {
-                    _context.Roles.Remove(role);
-                    _context.SaveChanges();
-                }
-                catch
-                {
-                    ViewData["message"] = "Users still in role " + roleName;
-                    return Index();
-                }
-            }
-            return RedirectToAction("Index");
-        }
 
         [Authorize(Roles = "Admin")]
         public IActionResult Assign()
@@ -70,14 +51,22 @@ namespace WorldTravelBlog.Controllers
             return View();
         }
 
+        [Authorize(Roles = "Admin")]
+        public IActionResult AddToUser(string username, string roleName)
+        {
+            var user = GetUser(username);
+            var thing = _userManager.AddToRoleAsync(user, roleName).Result;
+            return GetRoles(username);
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
-        public IActionResult GetRoles(string user)
+        public IActionResult GetRoles(string username)
         {
-            var usera = GetUser(user);
-            ViewBag.User = usera;
-            var userRoles = _userManager.GetRolesAsync(usera).Result;
+            var user = GetUser(username);
+            ViewBag.User = user;
+            var userRoles = _userManager.GetRolesAsync(user).Result;
             ViewBag.RolesForThisUser = userRoles;
             var preroles = _context.Roles.ToList();
             var roles = new List<string>();
@@ -100,23 +89,7 @@ namespace WorldTravelBlog.Controllers
             ViewBag.Roles = roles;
             return View("Assign");
         }
-
-        [Authorize(Roles = "Admin")]
-        public IActionResult AddToUser(string username, string roleName)
-        {
-            var user = GetUser(username);
-            var thing = _userManager.AddToRoleAsync(user, roleName).Result;
-            return GetRoles(username);
-        }
-
-        [HttpPost]
-        [Authorize(Roles = "Admin")]
-        public IActionResult DeleteFromUser(string username, string roleName)
-        {
-            var thing = _userManager.RemoveFromRoleAsync(GetUser(username), roleName).Result;
-            return GetRoles(username);
-        }
-
+        
         [Authorize(Roles = "Admin")]
         public ApplicationUser GetUser(string username)
         {
@@ -131,15 +104,32 @@ namespace WorldTravelBlog.Controllers
             return View("Edit");
         }
 
+
+        [Authorize(Roles = "Admin")]
+        public IActionResult Delete(string roleName)
+        {
+            var role = _context.Roles.FirstOrDefault(m => m.Name == roleName);
+            if (role != null)
+            {
+                try
+                {
+                    _context.Roles.Remove(role);
+                    _context.SaveChanges();
+                }
+                catch
+                {
+                    ViewData["message"] = "Users still in role " + roleName;
+                    return Index();
+                }
+            }
+            return RedirectToAction("Index");
+        }
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public IActionResult Edit()
+        public IActionResult DeleteFromUser(string username, string roleName)
         {
-            var role = _context.Roles.FirstOrDefault(m => m.Name == Request.Form["role-name"]);
-            role.Name = Request.Form["edit-role"];
-            _context.Roles.Update(role);
-            _context.SaveChanges();
-            return RedirectToAction("Index");
+            var thing = _userManager.RemoveFromRoleAsync(GetUser(username), roleName).Result;
+            return GetRoles(username);
         }
     }
 }
